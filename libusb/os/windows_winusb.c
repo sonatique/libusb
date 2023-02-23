@@ -1277,7 +1277,7 @@ static int enumerate_hcd_root_hub(struct libusb_context *ctx, const char *dev_id
 		return LIBUSB_SUCCESS;
 	}
 
-	dev = usbi_get_device_by_session_id(ctx, (unsigned long)child_devinst);
+	struct libusb_device* dev = usbi_get_device_by_session_id(ctx, (unsigned long)child_devinst);
 	if (dev == NULL) {
 		usbi_warn(ctx, "HCD '%s' child not found", dev_id);
 		return LIBUSB_SUCCESS;
