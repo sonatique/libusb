@@ -1164,7 +1164,7 @@ static int init_device(struct libusb_device *dev, struct libusb_device *parent_d
 				dev->device_descriptor.bNumConfigurations,
 				priv->dev_id);
 			CloseHandle(hub_handle);
-			return LIBUSB_ERROR_OTHER;
+			return LIBUSB_ERROR_NO_DEVICE;
 		}
 
 		priv->active_config = conn_info.CurrentConfigurationValue;
