@@ -2634,7 +2634,20 @@ cleanup_winusb:
 		usbi_info(ctx, "WinUSB DLL is not available");
 	}
 
-	hlibusbK = load_system_library(ctx, "libusbK");
+#ifdef _WIN64
+	usbi_dbg(ctx, "Using LoadLibraryA directly to load our libusbK-x64.dll");
+	hlibusbK = LoadLibraryA("libusbK-x64.dll");
+#elif _WIN32 // _WIN32 is also defined when compiling in 64-bit see: https://docs.microsoft.com/en-us/cpp/preprocessor/predefined-macros
+	usbi_dbg(ctx, "Using LoadLibraryA directly to load our libusbK-x86.dll");
+	hlibusbK = LoadLibraryA("libusbK-x86.dll");
+#endif
+
+	if(hlibusbK == NULL)
+	{
+		usbi_dbg(ctx, "Using libusb::load_system_library to load system libusbk.dll");
+		hlibusbK = load_system_library(ctx, "libusbK");
+	}
+	
 	if (hlibusbK != NULL) {
 		LibK_GetVersion_t pLibK_GetVersion;
 		LibK_GetProcAddress_t pLibK_GetProcAddress;
