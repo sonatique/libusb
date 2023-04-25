@@ -2065,7 +2065,7 @@ static int winusb_get_device_list(struct libusb_context *ctx)
 				case USB_API_HUB:
 					parent_dev = get_ancestor(ctx, dev_info_data.DevInst, NULL);
 					if (parent_dev == NULL) {
-						if (!get_dev_port_number(*dev_info, &dev_info_data, &hub_port_nr) || hub_port_nr == 0) {
+						if (!get_dev_port_number(dev, *dev_info, &dev_info_data, parent_dev, &hub_port_nr) || hub_port_nr == 0) {
 							if (bus_number == UINT8_MAX) {
 								usbi_warn(ctx, "program assertion failed - found more than %u buses, skipping the rest", UINT8_MAX);
 								break;
