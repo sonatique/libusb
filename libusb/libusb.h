@@ -118,7 +118,10 @@ typedef SSIZE_T ssize_t;
  * return type, before the function name. See internal documentation for
  * API_EXPORTED.
  */
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(__WINE__)
+#define LIBUSB_CALL __attribute__((ms_abi))
+#define LIBUSB_CALLV __attribute__((ms_abi))
+#elif defined(_WIN32) || defined(__CYGWIN__)
 #define LIBUSB_CALL WINAPI
 #define LIBUSB_CALLV WINAPIV
 #else

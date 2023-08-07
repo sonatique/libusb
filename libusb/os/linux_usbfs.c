@@ -136,6 +136,10 @@ struct linux_device_handle_priv {
 	uint32_t caps;
 };
 
+#if defined(__WINE__)
+#undef ERROR
+#endif
+
 enum reap_action {
 	NORMAL = 0,
 	/* submission failed after the first URB, so await cancellation/completion
@@ -437,7 +441,13 @@ static void op_exit(struct libusb_context *ctx)
 	}
 }
 
-static int op_set_option(struct libusb_context *ctx, enum libusb_option option, va_list ap)
+static int op_set_option(struct libusb_context *ctx, enum libusb_option option, 
+#if defined(__WINE__)
+	__builtin_ms_va_list ap
+#else
+	va_list ap
+#endif
+)
 {
 	UNUSED(ap);
 

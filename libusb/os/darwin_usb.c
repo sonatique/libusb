@@ -2278,7 +2278,7 @@ static int submit_bulk_transfer(struct usbi_transfer *itransfer) {
   }
 
   if (ret)
-    usbi_err (TRANSFER_CTX (transfer), "bulk transfer failed (dir = %s): %s (code = 0x%08x)", IS_XFERIN(transfer) ? "In" : "Out",
+    usbi_err (TRANSFER_CTX (transfer), "bulk transfer failed #2 (dir = %s): %s (code = 0x%08x)", IS_XFERIN(transfer) ? "In" : "Out",
                darwin_error_str(ret), ret);
 
   return darwin_to_libusb (ret);

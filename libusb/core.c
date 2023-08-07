@@ -32,6 +32,12 @@
 #include <syslog.h>
 #endif
 
+#if defined(__WINE__)
+int	wine_vsnprintf(char * __restrict __str, size_t __size, const char * __restrict __format, __builtin_ms_va_list);
+#undef vsnprintf
+#define vsnprintf wine_vsnprintf
+#endif
+
 static const struct libusb_version libusb_version_internal =
 	{ LIBUSB_MAJOR, LIBUSB_MINOR, LIBUSB_MICRO, LIBUSB_NANO,
 	  LIBUSB_RC, "https://libusb.info" };
@@ -2301,12 +2307,17 @@ int API_EXPORTEDV libusb_set_option(libusb_context *ctx,
 {
 	int arg = 0, r = LIBUSB_SUCCESS;
 	libusb_log_cb log_cb = NULL;
+#if defined(__WINE__)
+	__builtin_ms_va_list ap;
+	__builtin_ms_va_start(ap, option);
+#else
 	va_list ap;
 #if defined(ENABLE_LOGGING) && !defined(ENABLE_DEBUG_LOGGING)
 	int is_default_context = (NULL == ctx);
 #endif
 
 	va_start(ap, option);
+#endif
 
 	if (LIBUSB_OPTION_LOG_LEVEL == option) {
 		arg = va_arg(ap, int);
@@ -2376,7 +2387,11 @@ int API_EXPORTEDV libusb_set_option(libusb_context *ctx,
 		}
 	} while (0);
 
+#if defined(__WINE__)
+	__builtin_ms_va_end(ap);
+#else
 	va_end(ap);
+#endif
 
 	return r;
 }
@@ -2757,7 +2772,13 @@ static void log_str(enum libusb_log_level level, const char *str)
 }
 
 static void log_v(struct libusb_context *ctx, enum libusb_log_level level,
-	const char *function, const char *format, va_list args)
+	const char *function, const char *format,
+#if defined(__WINE__)
+	__builtin_ms_va_list args
+#else
+	va_list args
+#endif
+	)
 {
 	const char *prefix;
 	char buf[USBI_MAX_LOG_LEN];
@@ -2852,14 +2873,28 @@ static void log_v(struct libusb_context *ctx, enum libusb_log_level level,
 #endif
 }
 
+#if defined(__WINE__)
+LIBUSB_CALL
+#endif
 void usbi_log(struct libusb_context *ctx, enum libusb_log_level level,
 	const char *function, const char *format, ...)
 {
+#if defined(__WINE__)
+	__builtin_ms_va_list args;
+	
+	__builtin_ms_va_start(args, format);
+#else
 	va_list args;
 
 	va_start(args, format);
+#endif
+	
 	log_v(ctx, level, function, format, args);
+#if defined(__WINE__)
+	__builtin_ms_va_end(args);
+#else
 	va_end(args);
+#endif
 }
 
 #endif /* ENABLE_LOGGING */

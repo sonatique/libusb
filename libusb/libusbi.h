@@ -310,6 +310,9 @@ int usbi_vsnprintf(char *dst, size_t size, const char *format, va_list args);
 #define LIBUSB_PRINTF_WIN32
 #endif /* defined(_MSC_VER) && (_MSC_VER < 1900) */
 
+#if defined(__WINE__)
+	LIBUSB_CALL
+#endif
 void usbi_log(struct libusb_context *ctx, enum libusb_log_level level,
 	const char *function, const char *format, ...) PRINTF_FORMAT(4, 5);
 
@@ -956,7 +959,12 @@ struct usbi_os_backend {
 	 * Return 0 on success, or a LIBUSB_ERROR code on failure.
 	 */
 	int (*set_option)(struct libusb_context *ctx, enum libusb_option option,
-		va_list args);
+#if defined(__WINE__)
+		__builtin_ms_va_list args
+#else
+		va_list args
+#endif
+		);
 
 	/* Enumerate all the USB devices on the system, returning them in a list
 	 * of discovered devices.

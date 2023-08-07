@@ -25,6 +25,9 @@
 
 #include "libusbi.h"
 
+#if defined(__WINE__)
+#undef REFIID
+#endif
 #include <IOKit/IOTypes.h>
 #include <IOKit/IOCFBundle.h>
 #include <IOKit/usb/IOUSBLib.h>

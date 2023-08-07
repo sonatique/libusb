@@ -1,0 +1,28 @@
+CC = winegcc
+CFLAGS = -DHAVE_CONFIG_H -I. -I..  -I./libusb -std=gnu11 -Wall -Wextra -Wshadow -Wunused -Wwrite-strings -Werror=format-security -Werror=implicit-function-declaration -Werror=implicit-int -Werror=init-self -Werror=missing-prototypes -Werror=strict-prototypes -Werror=undef -Werror=uninitialized -Wno-implicit-fallthrough -fvisibility=hidden -pthread -O3 -m64 -save-temps
+LDFLAGS = -shared -fPIC -ludev
+
+DEPS = config.h libusb/libusb.h libusb/libusbi.h libusb/version.h libusb/version_nano.h libusb/linux_usbfs.h libusb/os/events_posix.h libusb/os/threads_posix.h
+
+OBJ = libusb/wine/wine_vsnprintf.o libusb/core.o libusb/descriptor.o libusb/hotplug.o libusb/io.o libusb/strerror.o libusb/sync.o libusb/os/linux_usbfs.o libusb/os/linux_udev.c libusb/os/events_posix.o libusb/os/threads_posix.o
+
+build: install
+
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+bin/libusb-1.0-linux-wine-x64.dll: $(OBJ)
+	mkdir -p bin
+	$(CC) $(CFLAGS) $^ libusb-1.0_wine.spec -o $(@:.dll=.so) $(LDFLAGS)
+	mv $(@:.dll=.so) $@
+
+compile: bin/libusb-1.0-x64-wine.dll
+
+install: bin/libusb-1.0-linux-wine-x64.dll
+
+clean:
+	rm -rf bin
+	find . -name \*.o -delete -print
+	
+.PHONY: build
+.PHONY: clean compile
