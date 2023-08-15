@@ -1,6 +1,6 @@
 CC = winegcc
-CFLAGS = -DHAVE_CONFIG_H -I. -I..  -I./libusb -Wall -Wextra -Wshadow -Wunused -Wwrite-strings -Wno-parentheses-equality -Werror=format-security -pthread -DUSE_WS_PREFIX -O3 -m64 -save-temps
-LDFLAGS = -shared -fPIC -lobjc -Wl,-framework,IOKit -Wl,-framework,CoreFoundation -Wl,-framework,Security
+CFLAGS = -DHAVE_CONFIG_H -I. -I..  -I./libusb -std=gnu11 -Wall -Wextra -Wshadow -Wunused -Wwrite-strings -Wno-parentheses-equality -Werror=format-security -Werror=implicit-function-declaration -Werror=implicit-int -Werror=init-self -Werror=missing-prototypes -Werror=strict-prototypes -Werror=undef -Werror=uninitialized -fvisibility=hidden -pthread -DUSE_WS_PREFIX -O3 -m64 -save-temps
+LDFLAGS = -shared -fPIC -DPIC -pthread -lobjc -Wl,-framework,IOKit -Wl,-framework,CoreFoundation -Wl,-framework,Security
 
 DEPS = config.h libusb/libusb.h libusb/libusbi.h libusb/version.h libusb/version_nano.h libusb/os/darwin_usb.h libusb/os/events_posix.h libusb/os/threads_posix.h
 
