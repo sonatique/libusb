@@ -2312,3 +2312,12 @@ int LIBUSB_CALLV libusb_set_option(libusb_context *ctx, enum libusb_option optio
 #endif
 
 #endif
+
+#if defined(__WINE__)
+
+#include <sys/utsname.h>
+int LIBUSB_CALL li6_uname(struct utsname* details);
+void * LIBUSB_CALL li6_alloc(size_t size);
+void LIBUSB_CALL li6_free(void* ptr);
+
+#endif

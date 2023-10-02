@@ -4,7 +4,7 @@ LDFLAGS = -shared -fPIC -ludev
 
 DEPS = config.h libusb/libusb.h libusb/libusbi.h libusb/version.h libusb/version_nano.h libusb/linux_usbfs.h libusb/os/events_posix.h libusb/os/threads_posix.h
 
-OBJ = libusb/wine/wine_vsnprintf.o libusb/core.o libusb/descriptor.o libusb/hotplug.o libusb/io.o libusb/strerror.o libusb/sync.o libusb/os/linux_usbfs.o libusb/os/linux_udev.c libusb/os/events_posix.o libusb/os/threads_posix.o
+OBJ = libusb/system.o libusb/wine/wine_vsnprintf.o libusb/core.o libusb/descriptor.o libusb/hotplug.o libusb/io.o libusb/strerror.o libusb/sync.o libusb/os/linux_usbfs.o libusb/os/linux_udev.c libusb/os/events_posix.o libusb/os/threads_posix.o
 
 build: install
 

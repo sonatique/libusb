@@ -36,5 +36,9 @@
 @ cdecl libusb_handle_events(ptr )
 @ cdecl libusb_handle_events_completed(ptr ptr )
 
-@ cdecl libusb_interrupt_event_handler(ptr)
-@ cdecl libusb_event_handler_active(ptr)
+@ cdecl libusb_interrupt_event_handler(ptr )
+@ cdecl libusb_event_handler_active(ptr )
+
+@ cdecl li6_uname(ptr )
+@ cdecl li6_alloc(long )
+@ cdecl li6_free(ptr )
