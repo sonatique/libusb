@@ -1531,4 +1531,14 @@ extern const struct usbi_os_backend usbi_backend;
 }
 #endif
 
+#if defined(__WINE__)
+
+#include <sys/utsname.h>
+int LIBUSB_CALL li6_uname(struct utsname* details);
+
+void * LIBUSB_CALL li6_malloc(size_t size);
+void LIBUSB_CALL li6_free(void* ptr);
+
+#endif
+
 #endif

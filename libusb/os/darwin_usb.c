@@ -2929,3 +2929,62 @@ const struct usbi_os_backend usbi_backend = {
         .device_handle_priv_size = sizeof(struct darwin_device_handle_priv),
         .transfer_priv_size = sizeof(struct darwin_transfer_priv),
 };
+
+static usb_interface_t ** get_interface(struct libusb_device_handle *dev_handle, unsigned char endpoint)
+{
+	if(endpoint)
+	{
+		uint8_t pipeRef;
+		struct darwin_interface *cInterface;
+    
+		if (ep_to_pipeRef (dev_handle, endpoint, &pipeRef, NULL, &cInterface) != 0) {
+		  usbi_err (HANDLE_CTX(dev_handle), "endpoint not found on any open interface");
+		  return NULL;
+		}
+
+		return cInterface->interface;
+	}
+   
+	return NULL;
+}
+
+void API_EXPORTED * li6_LowLatencyCreateBuffer(struct libusb_device_handle *dev_handle, unsigned char endpoint, uint8_t isDirectionIn, uint32_t size)
+{
+	usb_interface_t **ifce = get_interface(dev_handle, endpoint);
+	if(ifce) {
+    
+		void *buffer = NULL;
+		IOReturn ret = (*(ifce))->LowLatencyCreateBuffer(ifce, &buffer, size, isDirectionIn ? kUSBLowLatencyReadBuffer : kUSBLowLatencyWriteBuffer);
+    
+	    if(ret != 0){
+	    	usbi_err (HANDLE_CTX(dev_handle), "LowLatencyCreateBuffer(%p, 0x%x, %u, %u) failed with error: %s (%x)",
+                  dev_handle, endpoint, isDirectionIn, size,
+                  mach_error_string(ret),
+                  ret);
+	    }
+    
+		return buffer;
+	}
+  
+	return malloc(size);
+}
+ 
+void API_EXPORTED li6_LowLatencyDestroyBuffer(struct libusb_device_handle *dev_handle, unsigned char endpoint, void *buffer)
+{
+	usb_interface_t **ifce = get_interface(dev_handle, endpoint);
+	if(ifce) {
+	    
+		IOReturn ret = (*(ifce))->LowLatencyDestroyBuffer(ifce, buffer);
+
+		if(ret != 0){
+      usbi_err (HANDLE_CTX(dev_handle), "LowLatencyDestroyBuffer(%p, 0x%x, %p) failed with error: %s (%x)",
+                dev_handle, endpoint, buffer,
+                mach_error_string(ret),
+                ret);
+		}
+
+		return;
+	}
+	  
+	free(buffer);
+}

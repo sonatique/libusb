@@ -31,6 +31,9 @@
 @ cdecl libusb_cancel_transfer(ptr )
 @ cdecl libusb_free_transfer(ptr )
 
+@ cdecl libusb_dev_mem_alloc(ptr long)
+@ cdecl libusb_dev_mem_free(ptr ptr long)
+
 @ cdecl libusb_handle_events_timeout(ptr ptr )
 @ cdecl libusb_handle_events_timeout_completed(ptr ptr ptr )
 @ cdecl libusb_handle_events(ptr )
@@ -40,5 +43,5 @@
 @ cdecl libusb_event_handler_active(ptr )
 
 @ cdecl li6_uname(ptr )
-@ cdecl li6_alloc(long )
+@ cdecl li6_malloc(long )
 @ cdecl li6_free(ptr )

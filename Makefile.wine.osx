@@ -4,7 +4,7 @@ LDFLAGS = -shared -fPIC -DPIC -pthread -lobjc -Wl,-framework,IOKit -Wl,-framewor
 
 DEPS = config.h libusb/libusb.h libusb/libusbi.h libusb/version.h libusb/version_nano.h libusb/os/darwin_usb.h libusb/os/events_posix.h libusb/os/threads_posix.h
 
-OBJ = libusb/system.o libusb/wine/wine_vsnprintf.o libusb/core.o libusb/descriptor.o libusb/hotplug.o libusb/io.o libusb/strerror.o libusb/sync.o libusb/os/darwin_usb.o libusb/os/events_posix.o libusb/os/threads_posix.o
+OBJ = libusb/wine/wine_vsnprintf.o libusb/core.o libusb/descriptor.o libusb/hotplug.o libusb/io.o libusb/strerror.o libusb/sync.o libusb/os/darwin_usb.o libusb/os/events_posix.o libusb/os/threads_posix.o
 
 build: install
 
@@ -12,9 +12,13 @@ build: install
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 bin/libusb-1.0-osx-wine-x64.dll: $(OBJ)
+	cp libusb-1.0_wine.spec libusb-1.0_wine_osx.spec
+	echo "\n\n" >> libusb-1.0_wine_osx.spec
+	cat libusb-1.0_wine_osx_only.spec >> libusb-1.0_wine_osx.spec
 	mkdir -p bin
-	$(CC) $(CFLAGS) $^ libusb-1.0_wine.spec -o $(@:.dll=.so) $(LDFLAGS)
+	$(CC) $(CFLAGS) $^ libusb-1.0_wine_osx.spec -o $(@:.dll=.so) $(LDFLAGS)
 	mv $(@:.dll=.so) $@
+	rm libusb-1.0_wine_osx.spec
 
 compile: bin/libusb-1.0-x64-wine.dll
 

@@ -156,4 +156,7 @@ struct darwin_transfer_priv {
   UInt32 size;
 };
 
+void * LIBUSB_CALL li6_LowLatencyCreateBuffer(struct libusb_device_handle *dev_handle, unsigned char endpoint, uint8_t isDirectionIn, uint32_t size);
+void LIBUSB_CALL li6_LowLatencyDestroyBuffer(struct libusb_device_handle *dev_handle, unsigned char endpoint, void *buffer);
+
 #endif

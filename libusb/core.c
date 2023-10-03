@@ -2968,3 +2968,22 @@ const struct libusb_version * LIBUSB_CALL libusb_get_version(void)
 {
 	return &libusb_version_internal;
 }
+
+#if defined(__WINE__)
+
+#include <sys/utsname.h>
+
+int API_EXPORTED li6_uname(struct utsname* details) {
+  return uname(details);
+}
+
+void API_EXPORTED * li6_malloc(size_t size) {
+	return malloc(size);
+}
+
+void API_EXPORTED li6_free(void* ptr) {
+	free(ptr);
+}
+
+
+#endif
