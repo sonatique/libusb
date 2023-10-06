@@ -2930,6 +2930,7 @@ const struct usbi_os_backend usbi_backend = {
         .transfer_priv_size = sizeof(struct darwin_transfer_priv),
 };
 
+/*
 static usb_interface_t ** get_interface(struct libusb_device_handle *dev_handle, unsigned char endpoint)
 {
 	if(endpoint)
@@ -2947,9 +2948,11 @@ static usb_interface_t ** get_interface(struct libusb_device_handle *dev_handle,
    
 	return NULL;
 }
+*/
 
 void API_EXPORTED * li6_LowLatencyCreateBuffer(struct libusb_device_handle *dev_handle, unsigned char endpoint, uint8_t isDirectionIn, uint32_t size)
 {
+	/*
 	usb_interface_t **ifce = get_interface(dev_handle, endpoint);
 	if(ifce) {
     
@@ -2965,12 +2968,13 @@ void API_EXPORTED * li6_LowLatencyCreateBuffer(struct libusb_device_handle *dev_
     
 		return buffer;
 	}
-  
+	*/
 	return malloc(size);
 }
  
 void API_EXPORTED li6_LowLatencyDestroyBuffer(struct libusb_device_handle *dev_handle, unsigned char endpoint, void *buffer)
 {
+	/*
 	usb_interface_t **ifce = get_interface(dev_handle, endpoint);
 	if(ifce) {
 	    
@@ -2985,6 +2989,6 @@ void API_EXPORTED li6_LowLatencyDestroyBuffer(struct libusb_device_handle *dev_h
 
 		return;
 	}
-	  
+	  */
 	free(buffer);
 }
