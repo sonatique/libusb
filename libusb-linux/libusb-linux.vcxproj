@@ -1,0 +1,261 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{941ebe61-5a5e-4cc9-b920-0b07cdd66817}</ProjectGuid>
+    <Keyword>Linux</Keyword>
+    <RootNamespace>libusb_linux</RootNamespace>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+    <ApplicationType>Linux</ApplicationType>
+    <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
+    <TargetLinuxPlatform>Generic</TargetLinuxPlatform>
+    <LinuxProjectType>{FC1A4D80-50E9-41DA-9192-61C0DBAA00D2}</LinuxProjectType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <BuildCommandLine>
+    </BuildCommandLine>
+    <ReBuildCommandLine>
+    </ReBuildCommandLine>
+    <CleanCommandLine>
+    </CleanCommandLine>
+    <RemoteBuildCommandLine>cd ..;make -f Makefile.wine.linux</RemoteBuildCommandLine>
+    <RemoteReBuildCommandLine>cd ..;chmod 777 autogen.sh;chmod 777 bootstrap.sh;./autogen.sh;make clean;make -f Makefile.wine.linux</RemoteReBuildCommandLine>
+    <RemoteCleanCommandLine>cd ..;make clean</RemoteCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <BuildCommandLine>
+    </BuildCommandLine>
+    <ReBuildCommandLine>
+    </ReBuildCommandLine>
+    <CleanCommandLine>
+    </CleanCommandLine>
+    <RemoteBuildCommandLine>cd ..;make -f Makefile.wine.linux</RemoteBuildCommandLine>
+    <RemoteReBuildCommandLine>cd ..;chmod 777 autogen.sh;chmod 777 bootstrap.sh;./autogen.sh;make clean;make -f Makefile.wine.linux</RemoteReBuildCommandLine>
+    <RemoteCleanCommandLine>cd ..;make clean</RemoteCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+    <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <BuildCommandLine>
+    </BuildCommandLine>
+    <ReBuildCommandLine>
+    </ReBuildCommandLine>
+    <CleanCommandLine>
+    </CleanCommandLine>
+    <RemoteBuildCommandLine>cd ..;make -f Makefile.wine.linux</RemoteBuildCommandLine>
+    <RemoteReBuildCommandLine>cd ..;chmod 777 autogen.sh;chmod 777 bootstrap.sh;./autogen.sh;make clean;make -f Makefile.wine.linux</RemoteReBuildCommandLine>
+    <RemoteCleanCommandLine>cd ..;make clean</RemoteCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <BuildCommandLine>
+    </BuildCommandLine>
+    <ReBuildCommandLine>
+    </ReBuildCommandLine>
+    <CleanCommandLine>
+    </CleanCommandLine>
+    <RemoteBuildCommandLine>cd ..;make -f Makefile.wine.linux</RemoteBuildCommandLine>
+    <RemoteReBuildCommandLine>cd ..;chmod 777 autogen.sh;chmod 777 bootstrap.sh;./autogen.sh;make clean;make -f Makefile.wine.linux</RemoteReBuildCommandLine>
+    <RemoteCleanCommandLine>cd ..;make clean</RemoteCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <BuildCommandLine>
+    </BuildCommandLine>
+    <ReBuildCommandLine>
+    </ReBuildCommandLine>
+    <CleanCommandLine>
+    </CleanCommandLine>
+    <RemoteBuildCommandLine>cd ..;make -f Makefile.wine.linux</RemoteBuildCommandLine>
+    <RemoteReBuildCommandLine>cd ..;chmod 777 autogen.sh;chmod 777 bootstrap.sh;./autogen.sh;make clean;make -f Makefile.wine.linux</RemoteReBuildCommandLine>
+    <RemoteCleanCommandLine>cd ..;make clean</RemoteCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <BuildCommandLine>
+    </BuildCommandLine>
+    <ReBuildCommandLine>
+    </ReBuildCommandLine>
+    <CleanCommandLine>
+    </CleanCommandLine>
+    <RemoteBuildCommandLine>cd ..;make -f Makefile.wine.linux</RemoteBuildCommandLine>
+    <RemoteReBuildCommandLine>cd ..;chmod 777 autogen.sh;chmod 777 bootstrap.sh;./autogen.sh;make clean;make -f Makefile.wine.linux</RemoteReBuildCommandLine>
+    <RemoteCleanCommandLine>cd ..;make clean</RemoteCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <BuildCommandLine>
+    </BuildCommandLine>
+    <ReBuildCommandLine>
+    </ReBuildCommandLine>
+    <CleanCommandLine>
+    </CleanCommandLine>
+    <RemoteBuildCommandLine>cd ..;make -f Makefile.wine.linux</RemoteBuildCommandLine>
+    <RemoteReBuildCommandLine>cd ..;chmod 777 autogen.sh;chmod 777 bootstrap.sh;./autogen.sh;make clean;make -f Makefile.wine.linux</RemoteReBuildCommandLine>
+    <RemoteCleanCommandLine>cd ..;make clean</RemoteCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+    <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <BuildCommandLine>
+    </BuildCommandLine>
+    <ReBuildCommandLine>
+    </ReBuildCommandLine>
+    <CleanCommandLine>
+    </CleanCommandLine>
+    <RemoteBuildCommandLine>cd ..;make -f Makefile.wine.linux</RemoteBuildCommandLine>
+    <RemoteReBuildCommandLine>cd ..;chmod 777 autogen.sh;chmod 777 bootstrap.sh;./autogen.sh;make clean;make -f Makefile.wine.linux</RemoteReBuildCommandLine>
+    <RemoteCleanCommandLine>cd ..;make clean</RemoteCleanCommandLine>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClCompile Include="..\examples\dpfp.c" />
+    <ClCompile Include="..\examples\ezusb.c" />
+    <ClCompile Include="..\examples\fxload.c" />
+    <ClCompile Include="..\examples\hotplugtest.c" />
+    <ClCompile Include="..\examples\listdevs.c" />
+    <ClCompile Include="..\examples\sam3u_benchmark.c" />
+    <ClCompile Include="..\examples\testlibusb.c" />
+    <ClCompile Include="..\examples\xusb.c" />
+    <ClCompile Include="..\libusb\core.c" />
+    <ClCompile Include="..\libusb\descriptor.c" />
+    <ClCompile Include="..\libusb\hotplug.c" />
+    <ClCompile Include="..\libusb\io.c" />
+    <ClCompile Include="..\libusb\os\events_posix.c" />
+    <ClCompile Include="..\libusb\os\linux_netlink.c" />
+    <ClCompile Include="..\libusb\os\linux_udev.c" />
+    <ClCompile Include="..\libusb\os\linux_usbfs.c" />
+    <ClCompile Include="..\libusb\os\threads_posix.c" />
+    <ClCompile Include="..\libusb\strerror.c" />
+    <ClCompile Include="..\libusb\sync.c" />
+    <ClCompile Include="..\libusb\wine\wine_vsnprintf.c" />
+    <ClCompile Include="..\tests\init_context.c" />
+    <ClCompile Include="..\tests\set_option.c" />
+    <ClCompile Include="..\tests\stress.c" />
+    <ClCompile Include="..\tests\stress_mt.c" />
+    <ClCompile Include="..\tests\testlib.c" />
+    <ClCompile Include="..\tests\umockdev.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\examples\ezusb.h" />
+    <ClInclude Include="..\libusb\libusb.h" />
+    <ClInclude Include="..\libusb\libusbi.h" />
+    <ClInclude Include="..\libusb\os\events_posix.h" />
+    <ClInclude Include="..\libusb\os\linux_usbfs.h" />
+    <ClInclude Include="..\libusb\os\threads_posix.h" />
+    <ClInclude Include="..\libusb\version.h" />
+    <ClInclude Include="..\libusb\version_nano.h" />
+    <ClInclude Include="..\tests\libusb_testlib.h" />
+    <ClInclude Include="config.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\AUTHORS" />
+    <None Include="..\autogen.sh" />
+    <None Include="..\bootstrap.sh" />
+    <None Include="..\ChangeLog" />
+    <None Include="..\configure.ac" />
+    <None Include="..\COPYING" />
+    <None Include="..\doc\doxygen.cfg.in" />
+    <None Include="..\doc\Makefile.in" />
+    <None Include="..\examples\Makefile.am" />
+    <None Include="..\libusb-1.0.pc.in" />
+    <None Include="..\libusb-1.0_wine.spec" />
+    <None Include="..\libusb-1.0_wine_osx_only.spec" />
+    <None Include="..\libusb\libusb-1.0.def" />
+    <None Include="..\libusb\Makefile.am" />
+    <None Include="..\libusb\Makefile.am.extra" />
+    <None Include="..\Makefile.am" />
+    <None Include="..\Makefile.wine.linux" />
+    <None Include="..\Makefile.wine.osx" />
+    <None Include="..\NEWS" />
+    <None Include="..\README" />
+    <None Include="..\tests\Makefile.am" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\libusb\libusb-1.0.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\doc\libusb.png" />
+  </ItemGroup>
+  <ItemDefinitionGroup />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>
