@@ -42,6 +42,8 @@
 @ cdecl libusb_interrupt_event_handler(ptr )
 @ cdecl libusb_event_handler_active(ptr )
 
+@ cdecl li6_set_thread_delegates(ptr ptr);
+
 @ cdecl li6_uname(ptr )
 @ cdecl li6_malloc(long )
 @ cdecl li6_free(ptr )

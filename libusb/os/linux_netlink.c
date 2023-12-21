@@ -31,6 +31,11 @@
 #include <string.h>
 #include <unistd.h>
 
+#if defined(__WINE__)
+#include "wine/wine_threads.h"
+static int32_t libusb_linux_event_thread_id;
+#endif
+
 #ifdef HAVE_ASM_TYPES_H
 #include <asm/types.h>
 #endif
@@ -49,9 +54,15 @@
 
 static int linux_netlink_socket = -1;
 static usbi_event_t netlink_control_event = USBI_INVALID_EVENT;
+#if !defined(__WINE__)
 static pthread_t libusb_linux_event_thread;
+#endif
 
-static void *linux_netlink_event_thread_main(void *arg);
+static void *
+#if defined(__WINE__)
+LIBUSB_CALL
+#endif
+linux_netlink_event_thread_main(void *arg);
 
 static int set_fd_cloexec_nb(int fd, int socktype)
 {
@@ -130,13 +141,24 @@ int linux_netlink_start_event_monitor(void)
 		usbi_err(NULL, "failed to create netlink control event");
 		goto err_close_socket;
 	}
+#if defined(__WINE__)
+	if(!thread_create_ext_impl)	{
+		usbi_err(NULL, "failed to create netlink event thread because thread creation implementation is NULL");
+		goto err_destroy_event;
+	}
 
+	ret = thread_create_ext_impl(&libusb_linux_event_thread_id, linux_netlink_event_thread_main, NULL);
+	if (ret) {
+		usbi_err(NULL, "failed to create netlink event thread (%d)", ret);
+		goto err_destroy_event;
+	}	
+#else
 	ret = pthread_create(&libusb_linux_event_thread, NULL, linux_netlink_event_thread_main, NULL);
 	if (ret != 0) {
 		usbi_err(NULL, "failed to create netlink event thread (%d)", ret);
 		goto err_destroy_event;
 	}
-
+#endif
 	return LIBUSB_SUCCESS;
 
 err_destroy_event:
@@ -157,11 +179,21 @@ int linux_netlink_stop_event_monitor(void)
 
 	/* Signal the control event and wait for the thread to exit */
 	usbi_signal_event(&netlink_control_event);
-
+#if defined(__WINE__)
+	if(!thread_join_ext_impl) {
+		usbi_err(NULL, "failed to join netlink event thread because thread join implementation is NULL");
+	}
+	else {
+		ret = thread_join_ext_impl(libusb_linux_event_thread_id);
+		if (ret) {
+			usbi_warn(NULL, "failed to join netlink event thread (%d)", ret);
+		}
+	}
+#else
 	ret = pthread_join(libusb_linux_event_thread, NULL);
 	if (ret)
 		usbi_warn(NULL, "failed to join netlink event thread (%d)", ret);
-
+#endif
 	usbi_destroy_event(&netlink_control_event);
 	netlink_control_event = (usbi_event_t)USBI_INVALID_EVENT;
 
@@ -344,7 +376,11 @@ static int linux_netlink_read_message(void)
 	return 0;
 }
 
-static void *linux_netlink_event_thread_main(void *arg)
+static void *
+#if defined(__WINE__)
+LIBUSB_CALL
+#endif
+linux_netlink_event_thread_main(void *arg)
 {
 	struct pollfd fds[] = {
 		{ .fd = USBI_EVENT_OS_HANDLE(&netlink_control_event),

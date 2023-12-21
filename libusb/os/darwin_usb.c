@@ -49,6 +49,11 @@
 
 #include "darwin_usb.h"
 
+#if defined(__WINE__)
+#include "wine/wine_threads.h"
+static int32_t libusb_darwin_at_thread_id;
+#endif
+
 static int init_count = 0;
 
 /* Both kIOMasterPortDefault or kIOMainPortDefault are synonyms for 0. */
@@ -76,8 +81,10 @@ bool libusb_testonly_clear_running_version_cache __attribute__ ((visibility ("hi
 
 #define DARWIN_CACHED_DEVICE(a) (((struct darwin_device_priv *)usbi_get_device_priv((a)))->dev)
 
+#if !defined(__WINE__)
 /* async event thread */
 static pthread_t libusb_darwin_at;
+#endif
 
 /* protected by libusb_darwin_at_mutex */
 static bool libusb_darwin_at_started;
@@ -717,7 +724,11 @@ static void darwin_fail_startup(void) {
   pthread_exit (NULL);
 }
 
-static void *darwin_event_thread_main (void *arg0) {
+static void *
+#if defined(__WINE__)
+LIBUSB_CALL
+#endif
+darwin_event_thread_main (void *arg0) {
   UNUSED(arg0);
   IOReturn kresult;
   CFRunLoopRef runloop;
@@ -867,12 +878,24 @@ static int darwin_first_time_init(void) {
     return LIBUSB_ERROR_OTHER;
   }
 
+  
+#if defined(__WINE__)
+	if(!thread_create_ext_impl)	{
+		usbi_err(NULL, "failed to create event thread because thread creation implementation is NULL");
+		return LIBUSB_ERROR_OTHER;
+	}
+	int rc = thread_create_ext_impl(&libusb_darwin_at_thread_id, darwin_event_thread_main, NULL);
+	if (0 != rc) {
+		usbi_err (NULL, "could not create event thread, error %d", rc);
+		return LIBUSB_ERROR_OTHER;
+	}
+#else
   int rc = pthread_create (&libusb_darwin_at, NULL, darwin_event_thread_main, NULL);
   if (0 != rc) {
     usbi_err (NULL, "could not create event thread, error %d", rc);
     return LIBUSB_ERROR_OTHER;
   }
-
+#endif
   pthread_mutex_lock (&libusb_darwin_at_mutex);
   libusb_darwin_at_started = true;
   while (NULL == libusb_darwin_acfl) {
@@ -930,11 +953,20 @@ static void darwin_exit (struct libusb_context *ctx) {
     }
 
     if (libusb_darwin_at_started) {
-      pthread_join (libusb_darwin_at, NULL);
+#if defined(__WINE__)
+	if(!thread_join_ext_impl) {
+		usbi_err(NULL, "failed to join event thread because thread join implementation is NULL");
+	}
+	else {
+		thread_join_ext_impl(libusb_darwin_at_thread_id);
+	}
+#else
+		pthread_join (libusb_darwin_at, NULL);
+#endif      
       libusb_darwin_at_started = false;
     }
     pthread_mutex_unlock (&libusb_darwin_at_mutex);
-
+#endif
     darwin_cleanup_devices ();
   }
   usbi_mutex_unlock(&darwin_cached_devices_mutex);
@@ -2952,6 +2984,9 @@ static usb_interface_t ** get_interface(struct libusb_device_handle *dev_handle,
 
 void API_EXPORTED * li6_LowLatencyCreateBuffer(struct libusb_device_handle *dev_handle, unsigned char endpoint, uint8_t isDirectionIn, uint32_t size)
 {
+	UNUSED(dev_handle);
+	UNUSED(endpoint);
+	UNUSED(isDirectionIn);
 	/*
 	usb_interface_t **ifce = get_interface(dev_handle, endpoint);
 	if(ifce) {
@@ -2974,6 +3009,8 @@ void API_EXPORTED * li6_LowLatencyCreateBuffer(struct libusb_device_handle *dev_
  
 void API_EXPORTED li6_LowLatencyDestroyBuffer(struct libusb_device_handle *dev_handle, unsigned char endpoint, void *buffer)
 {
+	UNUSED(dev_handle);
+	UNUSED(endpoint);
 	/*
 	usb_interface_t **ifce = get_interface(dev_handle, endpoint);
 	if(ifce) {

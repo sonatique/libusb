@@ -31,15 +31,26 @@
 #include <string.h>
 #include <unistd.h>
 
+#if defined(__WINE__)
+#include "wine/wine_threads.h"
+static int32_t linux_event_thread_id;
+#endif
+
 /* udev context */
 static struct udev *udev_ctx = NULL;
 static int udev_monitor_fd = -1;
 static usbi_event_t udev_control_event = USBI_INVALID_EVENT;
 static struct udev_monitor *udev_monitor = NULL;
+#if !defined(__WINE__)
 static pthread_t linux_event_thread;
+#endif
 
 static void udev_hotplug_event(struct udev_device *udev_dev);
-static void *linux_udev_event_thread_main(void *arg);
+static void *
+#if defined(__WINE__)
+LIBUSB_CALL
+#endif
+linux_udev_event_thread_main(void *arg);
 
 int linux_udev_start_event_monitor(void)
 {
@@ -106,12 +117,24 @@ int linux_udev_start_event_monitor(void)
 		goto err_free_monitor;
 	}
 
+#if defined(__WINE__)
+	if(!thread_create_ext_impl)	{
+		usbi_err(NULL, "failed to create hotplug event thread because thread creation implementation is NULL");
+		goto err_destroy_event;
+	}
+
+	r = thread_create_ext_impl(&linux_event_thread_id, linux_udev_event_thread_main, NULL);
+	if (r) {
+		usbi_err(NULL, "failed to create hotplug event thread (%d)", r);
+		goto err_destroy_event;
+	}	
+#else
 	r = pthread_create(&linux_event_thread, NULL, linux_udev_event_thread_main, NULL);
 	if (r) {
 		usbi_err(NULL, "failed to create hotplug event thread (%d)", r);
 		goto err_destroy_event;
 	}
-
+#endif
 	return LIBUSB_SUCCESS;
 
 err_destroy_event:
@@ -138,10 +161,21 @@ int linux_udev_stop_event_monitor(void)
 
 	/* Signal the control event and wait for the thread to exit */
 	usbi_signal_event(&udev_control_event);
-
+#if defined(__WINE__)
+	if(!thread_join_ext_impl) {
+		usbi_err(NULL, "failed to join hotplug event thread because thread join implementation is NULL");
+	}
+	else {
+		r = thread_join_ext_impl(linux_event_thread_id);
+		if (r) {
+			usbi_warn(NULL, "failed to join hotplug event thread (%d)", r);
+		}
+	}
+#else
 	r = pthread_join(linux_event_thread, NULL);
 	if (r)
 		usbi_warn(NULL, "failed to join hotplug event thread (%d)", r);
+#endif
 
 	usbi_destroy_event(&udev_control_event);
 	udev_control_event = (usbi_event_t)USBI_INVALID_EVENT;
@@ -158,7 +192,11 @@ int linux_udev_stop_event_monitor(void)
 	return LIBUSB_SUCCESS;
 }
 
-static void *linux_udev_event_thread_main(void *arg)
+static void *
+#if defined(__WINE__)
+LIBUSB_CALL
+#endif
+linux_udev_event_thread_main(void *arg)
 {
 	struct pollfd fds[] = {
 		{ .fd = USBI_EVENT_OS_HANDLE(&udev_control_event),

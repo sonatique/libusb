@@ -84,7 +84,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX;__WINE__</NMakePreprocessorDefinitions>
     <BuildCommandLine>
     </BuildCommandLine>
     <ReBuildCommandLine>
@@ -97,7 +97,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX;__WINE__</NMakePreprocessorDefinitions>
     <BuildCommandLine>
     </BuildCommandLine>
     <ReBuildCommandLine>
@@ -110,7 +110,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX;__WINE__</NMakePreprocessorDefinitions>
     <BuildCommandLine>
     </BuildCommandLine>
     <ReBuildCommandLine>
@@ -123,7 +123,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX;__WINE__</NMakePreprocessorDefinitions>
     <BuildCommandLine>
     </BuildCommandLine>
     <ReBuildCommandLine>
@@ -136,7 +136,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX;__WINE__</NMakePreprocessorDefinitions>
     <BuildCommandLine>
     </BuildCommandLine>
     <ReBuildCommandLine>
@@ -149,7 +149,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX;__WINE__</NMakePreprocessorDefinitions>
     <BuildCommandLine>
     </BuildCommandLine>
     <ReBuildCommandLine>
@@ -162,7 +162,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX;__WINE__</NMakePreprocessorDefinitions>
     <BuildCommandLine>
     </BuildCommandLine>
     <ReBuildCommandLine>
@@ -175,7 +175,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <NMakeIncludeSearchPath>C:\Projects\libusb\libusb-linux;C:\Projects\libusb\libusb\os;C:\Projects\libusb\libusb;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
-    <NMakePreprocessorDefinitions>PLATFORM_POSIX</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>PLATFORM_POSIX;__WINE__</NMakePreprocessorDefinitions>
     <BuildCommandLine>
     </BuildCommandLine>
     <ReBuildCommandLine>
@@ -206,6 +206,7 @@
     <ClCompile Include="..\libusb\os\threads_posix.c" />
     <ClCompile Include="..\libusb\strerror.c" />
     <ClCompile Include="..\libusb\sync.c" />
+    <ClCompile Include="..\libusb\wine\wine_threads.c" />
     <ClCompile Include="..\libusb\wine\wine_vsnprintf.c" />
     <ClCompile Include="..\tests\init_context.c" />
     <ClCompile Include="..\tests\set_option.c" />
@@ -223,6 +224,7 @@
     <ClInclude Include="..\libusb\os\threads_posix.h" />
     <ClInclude Include="..\libusb\version.h" />
     <ClInclude Include="..\libusb\version_nano.h" />
+    <ClInclude Include="..\libusb\wine\wine_threads.h" />
     <ClInclude Include="..\tests\libusb_testlib.h" />
     <ClInclude Include="config.h" />
   </ItemGroup>

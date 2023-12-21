@@ -1,10 +1,10 @@
 CC = winegcc
-CFLAGS = -DHAVE_CONFIG_H -I. -I..  -I./libusb -std=gnu11 -Wall -Wextra -Wshadow -Wunused -Wwrite-strings -Wno-parentheses-equality -Werror=format-security -Werror=implicit-function-declaration -Werror=implicit-int -Werror=init-self -Werror=missing-prototypes -Werror=strict-prototypes -Werror=undef -Werror=uninitialized -fvisibility=hidden -pthread -DUSE_WS_PREFIX -O3 -m64 -save-temps
+CFLAGS = -DHAVE_CONFIG_H -I. -I.. -I./libusb -std=gnu11 -Wall -Wextra -Wshadow -Wunused -Wwrite-strings -Wno-parentheses-equality -Werror=format-security -Werror=implicit-function-declaration -Werror=implicit-int -Werror=init-self -Werror=missing-prototypes -Werror=strict-prototypes -Werror=undef -Werror=uninitialized -fvisibility=hidden -pthread -DUSE_WS_PREFIX -O3 -m64
 LDFLAGS = -shared -fPIC -DPIC -pthread -lobjc -Wl,-framework,IOKit -Wl,-framework,CoreFoundation -Wl,-framework,Security
 
-DEPS = config.h libusb/libusb.h libusb/libusbi.h libusb/version.h libusb/version_nano.h libusb/os/darwin_usb.h libusb/os/events_posix.h libusb/os/threads_posix.h
+DEPS = config.h libusb/libusb.h libusb/libusbi.h libusb/version.h libusb/version_nano.h libusb/os/darwin_usb.h libusb/os/events_posix.h libusb/os/threads_posix.h libusb/wine/wine_threads.h
 
-OBJ = libusb/wine/wine_vsnprintf.o libusb/core.o libusb/descriptor.o libusb/hotplug.o libusb/io.o libusb/strerror.o libusb/sync.o libusb/os/darwin_usb.o libusb/os/events_posix.o libusb/os/threads_posix.o
+OBJ = libusb/wine/wine_threads.o libusb/wine/wine_vsnprintf.o libusb/core.o libusb/descriptor.o libusb/hotplug.o libusb/io.o libusb/strerror.o libusb/sync.o libusb/os/darwin_usb.o libusb/os/events_posix.o libusb/os/threads_posix.o
 
 build: install
 
