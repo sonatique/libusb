@@ -1433,7 +1433,7 @@ static int enumerate_hcd_root_hub(struct libusb_context *ctx, const char *dev_id
 		return LIBUSB_SUCCESS;
 	}
 
-	struct libusb_device* dev = usbi_get_device_by_session_id(ctx, (unsigned long)child_devinst);
+	dev = usbi_get_device_by_session_id(ctx, (unsigned long)child_devinst);
 	if (dev == NULL) {
 		usbi_warn(ctx, "HCD '%s' child not found", dev_id);
 		return LIBUSB_SUCCESS;
@@ -2115,7 +2115,7 @@ static int winusb_get_device_list(struct libusb_context *ctx)
 					priv->hotplug_status = UNCHANGED;
 				}
 				else {
-					if (!get_dev_port_number(*dev_info, &dev_info_data, &port_nr))
+					if (!get_dev_port_number(dev, *dev_info, &dev_info_data, parent_dev, &port_nr))
 						usbi_warn(ctx, "could not retrieve port number for device '%s': %s", dev_id, windows_error_str(0));
 					r = init_device(dev, parent_dev, (uint8_t)port_nr, dev_info_data.DevInst);
 				}

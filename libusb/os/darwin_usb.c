@@ -966,7 +966,6 @@ static void darwin_exit (struct libusb_context *ctx) {
       libusb_darwin_at_started = false;
     }
     pthread_mutex_unlock (&libusb_darwin_at_mutex);
-#endif
     darwin_cleanup_devices ();
   }
   usbi_mutex_unlock(&darwin_cached_devices_mutex);
