@@ -1,5 +1,10 @@
 @ cdecl libusb_init(ptr )
 @ cdecl libusb_exit(ptr )
+
+@ cdecl libusb_hotplug_register_callback(ptr long long long long long ptr ptr ptr)
+@ cdecl libusb_hotplug_deregister_callback(ptr long)
+@ cdecl libusb_hotplug_get_user_data(ptr long)
+
 @ cdecl libusb_set_option(ptr long long)
 @ cdecl libusb_set_log_cb(ptr ptr long)
 @ cdecl libusb_get_version()
