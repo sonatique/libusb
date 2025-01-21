@@ -1,4 +1,4 @@
-CC = winegcc
+CC = /opt/wine/bin/winegcc
 CFLAGS = -DHAVE_CONFIG_H -I. -I.. -I./libusb -maccumulate-outgoing-args -std=gnu11 -Wall -Wextra -Wshadow -Wunused -Wwrite-strings -Werror=format-security -Werror=implicit-function-declaration -Werror=implicit-int -Werror=init-self -Werror=missing-prototypes -Werror=strict-prototypes -Werror=undef -Werror=uninitialized -Wno-implicit-fallthrough -fvisibility=hidden -pthread -O3 -m64
 LDFLAGS = -shared -fPIC -ludev
 
@@ -21,7 +21,8 @@ compile: bin/libusb-1.0-x64-wine.dll
 install: bin/libusb-1.0-linux-wine-x64.dll
 
 clean:
-	rm -rf bin
+	-rm bin/libusb-1.0-x64-wine.dll
+	-rm bin/libusb-1.0-linux-wine-x64.dll
 	find . -name \*.o -delete -print
 	
 .PHONY: build

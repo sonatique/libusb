@@ -86,4 +86,4 @@ cscope.out
 *.out.so
 *.bc
 *.i
-libusb-1.0-osx-wine-x64.dll
+bin/*
