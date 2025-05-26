@@ -401,6 +401,15 @@ AM_CONDITIONAL([USE_UDEV], [test "x$use_udev" = xyes])
 dnl The -Wcast-function-type warning causes a flurry of warnings when compiling
 dnl Windows with GCC 8 or later because of dynamically loaded functions
 if test "x$backend" = xwindows; then
+	AC_ARG_ENABLE([windows-hotplug],
+	AS_HELP_STRING([--enable-windows-hotplug], [Enable Windows hotplug support]),
+	[enable_windows_hotplug="$enableval"],
+	[enable_windows_hotplug=no])
+
+	if test "x$enable_windows_hotplug" = "xyes"; then
+		AC_DEFINE([WINDOWS_HOTPLUG], [1], [Define to enable Windows hotplug support])
+	fi
+
 	saved_CFLAGS="${CFLAGS}"
 	CFLAGS="-Werror -Wcast-function-type"
 	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
