@@ -2233,7 +2233,7 @@ int API_EXPORTED libusb_set_auto_detach_kernel_driver(
  *
  * \see libusb_endpoint_set_raw_io()
  *
- * Since version 1.0.28, \ref LIBUSB_API_VERSION >= 0x0100010B
+ * Since version 1.0.30, \ref LIBUSB_API_VERSION >= 0x0100010C
  */
 int API_EXPORTED libusb_endpoint_supports_raw_io(libusb_device_handle* dev_handle,
 	uint8_t endpoint)
@@ -2285,7 +2285,7 @@ int API_EXPORTED libusb_endpoint_supports_raw_io(libusb_device_handle* dev_handl
  * \see libusb_endpoint_supports_raw_io()
  * \seealso https://learn.microsoft.com/en-us/windows-hardware/drivers/usbcon/winusb-functions-for-pipe-policy-modification
  *
- * Since version 1.0.28, \ref LIBUSB_API_VERSION >= 0x0100010B
+ * Since version 1.0.30, \ref LIBUSB_API_VERSION >= 0x0100010C
  */
 int API_EXPORTED libusb_endpoint_set_raw_io(libusb_device_handle* dev_handle,
 	uint8_t endpoint, int enable)
@@ -2309,7 +2309,7 @@ int API_EXPORTED libusb_endpoint_set_raw_io(libusb_device_handle* dev_handle,
  *
  * \see libusb_endpoint_set_raw_io()
  *
- * Since version 1.0.28, \ref LIBUSB_API_VERSION >= 0x0100010B
+ * Since version 1.0.30, \ref LIBUSB_API_VERSION >= 0x0100010C
  */
 int API_EXPORTED libusb_get_max_raw_io_transfer_size(
 	libusb_device_handle *dev_handle, uint8_t endpoint)
