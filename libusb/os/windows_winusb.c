@@ -1234,10 +1234,10 @@ static int init_device(struct libusb_device *dev, struct libusb_device *parent_d
 	return LIBUSB_SUCCESS;
 }
 
-static bool is_bus_and_port_used(struct libusb_device* dev, struct winusb_device_priv* priv) 
+static bool is_bus_and_port_used(struct libusb_device* dev, struct winusb_device_priv* priv)
 {
 	struct libusb_device* search_dev;
-	
+
 	usbi_mutex_lock(&dev->ctx->usb_devs_lock);
 
 	for_each_device(dev->ctx, search_dev) {
@@ -1255,7 +1255,7 @@ static bool is_bus_and_port_used(struct libusb_device* dev, struct winusb_device
 		if ( search_dev->parent_dev == dev->parent_dev
 			&& search_dev->bus_number == dev->bus_number && search_dev->port_number == dev->port_number
 			&& search_priv->depth == priv->depth) {
-			
+
 				usbi_mutex_unlock(&dev->ctx->usb_devs_lock);
 				return true;
 		}
@@ -1329,7 +1329,7 @@ static bool get_dev_port_number(struct libusb_device* dev, HDEVINFO dev_info, SP
 	// Since SPDRP_ADDRESS *may* return the actual port number, but not always, try another way
 	// of getting port number by matching VID/PID obtained via IOCTL_USB_GET_NODE_CONNECTION_INFORMATION_EX
 	// with values encoded in dev_id string.
-	// If we succeed then use this value, else revert to port_nr and return value from SPDRP_ADDRESS 
+	// If we succeed then use this value, else revert to port_nr and return value from SPDRP_ADDRESS
 
 	if (parent_dev == NULL)	{
 		return SPDRP_ADDRESS_try_result;
@@ -1344,10 +1344,10 @@ static bool get_dev_port_number(struct libusb_device* dev, HDEVINFO dev_info, SP
 	if (hub_handle == INVALID_HANDLE_VALUE) {
 		return SPDRP_ADDRESS_try_result;
 	}
-	
+
 	USB_NODE_INFORMATION hub_info;
 	ULONG n_bytes = 0;
-	
+
 	if(!DeviceIoControl(hub_handle,
 	  IOCTL_USB_GET_NODE_INFORMATION,
 	  &hub_info,
@@ -1360,7 +1360,7 @@ static bool get_dev_port_number(struct libusb_device* dev, HDEVINFO dev_info, SP
 	}
 
 	const uint8_t num_ports = (uint8_t)hub_info.u.HubInformation.HubDescriptor.bNumberOfPorts;
-	
+
 	struct winusb_device_priv* priv = usbi_get_device_priv(dev);
 	if (priv == NULL) {
 		return SPDRP_ADDRESS_try_result;
@@ -1385,7 +1385,7 @@ static bool get_dev_port_number(struct libusb_device* dev, HDEVINFO dev_info, SP
 	}
 
 	for(uint8_t possible_port_number = 1; possible_port_number <= num_ports; ++possible_port_number) {
-		
+
 		if (init_device(dev, parent_dev, possible_port_number, dev_info_data->DevInst) != LIBUSB_SUCCESS
 			|| dev->device_descriptor.idVendor != vid || dev->device_descriptor.idProduct != pid
 			|| is_bus_and_port_used(dev, priv)) {
@@ -1393,7 +1393,7 @@ static bool get_dev_port_number(struct libusb_device* dev, HDEVINFO dev_info, SP
 			un_init_device(dev, priv);
 			continue;
 		}
-					
+
 		if (dev->device_descriptor.iSerialNumber == 0) {
 			*port_nr = possible_port_number;
 			return true;
@@ -1406,7 +1406,7 @@ static bool get_dev_port_number(struct libusb_device* dev, HDEVINFO dev_info, SP
 			continue;
 		}
 
-		if (libusb_get_string_descriptor_ascii(handle, dev->device_descriptor.iSerialNumber, serial_number_buffer, MAX_USB_STRING_LENGTH) < LIBUSB_SUCCESS 
+		if (libusb_get_string_descriptor_ascii(handle, dev->device_descriptor.iSerialNumber, serial_number_buffer, MAX_USB_STRING_LENGTH) < LIBUSB_SUCCESS
 			|| strstr(priv->dev_id, (const char*)serial_number_buffer) == NULL) {
 
 			libusb_close(handle);
@@ -1418,7 +1418,7 @@ static bool get_dev_port_number(struct libusb_device* dev, HDEVINFO dev_info, SP
 		*port_nr = possible_port_number;
 		return true;
 	}
-	
+
 	return SPDRP_ADDRESS_try_result;
 }
 
@@ -2124,11 +2124,11 @@ static int winusb_get_device_list(struct libusb_context *ctx)
 					// but we skip it (don't add to list of discovered devices)
 					usbi_warn(ctx, "failed to initialize device '%s'", priv->dev_id);
 					r = LIBUSB_SUCCESS;
-					
+
 					usbi_detach_device(dev);
 					libusb_unref_device(dev);
 				}
-					
+
 				break;
 			case HID_PASS:
 			case EXT_PASS:
@@ -2667,8 +2667,13 @@ cleanup_winusb:
 	}
 
 #ifdef _WIN64
+#ifdef _ARM64_
+	usbi_dbg(ctx, "Using LoadLibraryA directly to load our libusbK-ARM64.dll");
+	hlibusbK = LoadLibraryA("libusbK-ARM64.dll");
+#else
 	usbi_dbg(ctx, "Using LoadLibraryA directly to load our libusbK-x64.dll");
 	hlibusbK = LoadLibraryA("libusbK-x64.dll");
+#endif
 #elif _WIN32 // _WIN32 is also defined when compiling in 64-bit see: https://docs.microsoft.com/en-us/cpp/preprocessor/predefined-macros
 	usbi_dbg(ctx, "Using LoadLibraryA directly to load our libusbK-x86.dll");
 	hlibusbK = LoadLibraryA("libusbK-x86.dll");
@@ -2679,7 +2684,7 @@ cleanup_winusb:
 		usbi_dbg(ctx, "Using libusb::load_system_library to load system libusbk.dll");
 		hlibusbK = load_system_library(ctx, "libusbK");
 	}
-	
+
 	if (hlibusbK != NULL) {
 		LibK_GetVersion_t pLibK_GetVersion;
 		LibK_GetProcAddress_t pLibK_GetProcAddress;
@@ -3083,7 +3088,7 @@ static int winusbx_claim_interface(int sub_api, struct libusb_device_handle *dev
 	if(r != 0) {
 		return r;
 	}
-		
+
 	winusb_handle = handle_priv->interface_handle[iface].api_handle;
 
 	if(WinUSBX[sub_api].ClaimInterface) {
@@ -3091,7 +3096,7 @@ static int winusbx_claim_interface(int sub_api, struct libusb_device_handle *dev
 			usbi_dbg(ctx, "could not claim interface %u: %s", iface, windows_error_str(0));
 			handle_priv->interface_handle[iface].api_handle = INVALID_HANDLE_VALUE;
 			winusbx_release_interface(sub_api, dev_handle, iface);
-			return LIBUSB_ERROR_BUSY;				
+			return LIBUSB_ERROR_BUSY;
 		}
 	}
 
@@ -4373,7 +4378,7 @@ static int hid_initialize_interface(int sub_api, struct libusb_device_handle *de
 	handle_priv->interface_handle[iface].dev_handle = INTERFACE_INITIALIZED;
 
 	usbi_dbg(HANDLE_CTX(dev_handle), "initialized interface %u", iface);
-	
+
 	return LIBUSB_SUCCESS;
 }
 
@@ -4396,7 +4401,7 @@ static int hid_claim_interface(int sub_api, struct libusb_device_handle *dev_han
 	handle_priv->interface_handle[iface].dev_handle = INTERFACE_CLAIMED;
 
 	usbi_dbg(HANDLE_CTX(dev_handle), "claimed interface %u", iface);
-	
+
 	return LIBUSB_SUCCESS;
 }
 
