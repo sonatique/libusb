@@ -242,6 +242,8 @@ struct usbdk_device_priv {
 
 struct winusb_device_priv {
 	bool initialized;
+	bool seen_during_scan; // set true for each device encountered during windows_get_device_list
+	bool seen_before_scan; // set true for each device encountered before windows_get_device_list
 	bool root_hub;
 	uint8_t active_config;
 	uint8_t depth; // distance to HCD
@@ -275,7 +277,7 @@ struct usbdk_device_handle_priv {
 	// Not currently used
 	char dummy;
 };
- 
+
 enum WINUSB_ZLP {
 	WINUSB_ZLP_UNSET = 0,
 	WINUSB_ZLP_OFF = 1,
