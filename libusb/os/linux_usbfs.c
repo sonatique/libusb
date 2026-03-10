@@ -1588,9 +1588,13 @@ static int op_clear_halt(struct libusb_device_handle *handle,
 static int op_reset_device(struct libusb_device_handle *handle)
 {
 	struct linux_device_handle_priv *hpriv = usbi_get_device_handle_priv(handle);
+	unsigned long claimed_interfaces;
 	int fd = hpriv->fd;
 	int r, ret = 0;
 	uint8_t i;
+
+	usbi_mutex_lock(&handle->lock);
+	claimed_interfaces = handle->claimed_interfaces;
 
 	/* Doing a device reset will cause the usbfs driver to get unbound
 	 * from any interfaces it is bound to. By voluntarily unbinding
@@ -1598,11 +1602,10 @@ static int op_reset_device(struct libusb_device_handle *handle)
 	 * the interface after reset (which would end up with the interface
 	 * getting bound to the in kernel driver if any). */
 	for (i = 0; i < USB_MAXINTERFACES; i++) {
-		if (handle->claimed_interfaces & (1UL << i))
+		if (claimed_interfaces & (1UL << i))
 			release_interface(handle, i);
 	}
 
-	usbi_mutex_lock(&handle->lock);
 	r = ioctl(fd, IOCTL_USBFS_RESET, NULL);
 	if (r < 0) {
 		if (errno == ENODEV) {
@@ -1617,7 +1620,7 @@ static int op_reset_device(struct libusb_device_handle *handle)
 
 	/* And re-claim any interfaces which were claimed before the reset */
 	for (i = 0; i < USB_MAXINTERFACES; i++) {
-		if (!(handle->claimed_interfaces & (1UL << i)))
+		if (!(claimed_interfaces & (1UL << i)))
 			continue;
 		/*
 		 * A driver may have completed modprobing during
