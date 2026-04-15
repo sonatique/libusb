@@ -94,24 +94,35 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Try to find a PR associated with the HEAD commit.
-          PR_JSON=$(curl -sf \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" \
+          # Use the GitHub CLI to search for a merged PR that contains
+          # the commit SHA from this push event.  The CLI is more
+          # reliable than the REST endpoint for rebase-merged commits.
+          PR_INFO=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --search "${{ github.sha }}" \
+            --state merged \
+            --json number,title \
+            --jq '.[0] // empty' \
           ) || true
 
-          PR_NUMBER=$(echo "$PR_JSON" | jq -r '.[0].number // empty')
-          PR_TITLE=$(echo "$PR_JSON" | jq -r '.[0].title // empty')
-
-          if [ -n "$PR_NUMBER" ] && [ -n "$PR_TITLE" ]; then
+          if [ -n "$PR_INFO" ]; then
+            PR_NUMBER=$(echo "$PR_INFO" | jq -r '.number')
+            PR_TITLE=$(echo "$PR_INFO" | jq -r '.title')
             echo "source=pr" >> "$GITHUB_OUTPUT"
             echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-            echo "pr_title=$PR_TITLE" >> "$GITHUB_OUTPUT"
+            # Sanitize title: remove characters that could break the
+            # commit message or git commands.
+            PR_TITLE_SAFE=$(echo "$PR_TITLE" | tr -d '\n\r' | head -c 200)
+            echo "pr_title=$PR_TITLE_SAFE" >> "$GITHUB_OUTPUT"
+            echo "Found PR #$PR_NUMBER - $PR_TITLE_SAFE"
           else
-            LAST_MSG=$(git log -1 --format=%s)
+            # Direct push — use the first line of the triggering
+            # commit message (from the event payload, not from
+            # whatever is currently on master).
+            LAST_MSG=$(git log -1 --format=%s "${{ github.sha }}")
             echo "source=push" >> "$GITHUB_OUTPUT"
             echo "last_commit_subject=$LAST_MSG" >> "$GITHUB_OUTPUT"
+            echo "No associated PR found; using commit subject: $LAST_MSG"
           fi
 
       - name: Increment version_nano.h, commit and push
@@ -134,6 +145,8 @@ jobs:
           MAX_ATTEMPTS=5
           for i in $(seq 1 $MAX_ATTEMPTS); do
             # Always start from a clean, up-to-date master.
+            # This avoids any rebase/merge conflicts: we simply
+            # throw away our previous attempt and redo from scratch.
             git fetch origin master
             git reset --hard origin/master
 
