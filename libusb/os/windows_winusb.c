@@ -3094,7 +3094,10 @@ static int winusbx_claim_interface(int sub_api, struct libusb_device_handle *dev
 	if(WinUSBX[sub_api].ClaimInterface) {
 		if(!WinUSBX[sub_api].ClaimInterface(winusb_handle, iface, 0)) {
 			usbi_dbg(ctx, "could not claim interface %u: %s", iface, windows_error_str(0));
-			handle_priv->interface_handle[iface].api_handle = INVALID_HANDLE_VALUE;
+			// Let winusbx_release_interface() free the api_handle obtained by
+			// winusbx_initialize_interface(). It reads api_handle itself and sets
+			// it to INVALID_HANDLE_VALUE once freed, so clearing it here first would
+			// make release bail at its HANDLE_VALID() guard and leak the handle.
 			winusbx_release_interface(sub_api, dev_handle, iface);
 			return LIBUSB_ERROR_BUSY;
 		}
