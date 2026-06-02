@@ -2967,6 +2967,14 @@ static int winusbx_initialize_interface(int sub_api, struct libusb_device_handle
 	if (((is_using_usbccgp) || (iface == 0)) &&
 	    (!is_associated_interface || (iface==priv->usb_interface[iface].first_associated_interface))) {
 		// composite device (independent interfaces) or interface 0
+
+		// This interface may already have been initialized, e.g. auto-initialized
+		// as the first interface when another interface was claimed first. Calling
+		// Initialize() again on the same handle leaks the existing api_handle and
+		// can fail (ERROR_OUT_OF_STRUCTURES), so treat it as already done.
+		if (HANDLE_VALID(handle_priv->interface_handle[iface].api_handle))
+			return LIBUSB_SUCCESS;
+
 		file_handle = handle_priv->interface_handle[iface].dev_handle;
 		if (!HANDLE_VALID(file_handle))
 			return LIBUSB_ERROR_NOT_FOUND;
