@@ -3050,6 +3050,10 @@ static int winusbx_initialize_interface(int sub_api, struct libusb_device_handle
 		// must first initialize the first interface before you initialize the others
 		if (!HANDLE_VALID(winusb_handle)) {
 			file_handle = handle_priv->interface_handle[initialized_iface].dev_handle;
+			if (!HANDLE_VALID(file_handle)) {
+				usbi_err(ctx, "cannot initialize interface %u: interface %u (required first) is not open", iface, initialized_iface);
+				return LIBUSB_ERROR_NOT_FOUND;
+			}
 			if (WinUSBX[sub_api].Initialize(file_handle, &winusb_handle)) {
 				handle_priv->interface_handle[initialized_iface].api_handle = winusb_handle;
 				usbi_warn(ctx, "auto-initialized interface %u (required to initialize %u with WinUSB)", initialized_iface, iface);
