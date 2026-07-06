@@ -22,9 +22,13 @@
 #define LIBUSB_CLANG_THREAD_SAFETY_H
 
 // <https://clang.llvm.org/docs/ThreadSafetyAnalysis.html>
-// Enable thread safety attributes only with clang.
-// The attributes can be safely erased when compiling with other compilers.
-#if defined(__clang__) && (!defined(SWIG))
+// Enable thread safety attributes only with clang, and only when compiling as
+// C++. The analysis relies on class-scope name lookup to resolve the sibling
+// member referenced by GUARDED_BY() etc., which is unavailable in C (clang
+// then errors with "use of undeclared identifier"). Building as C++ is also how
+// the analysis is meant to be enabled (see -x c++ in Xcode/common.xcconfig).
+// The attributes can be safely erased when compiling as C or with other compilers.
+#if defined(__clang__) && defined(__cplusplus) && (!defined(SWIG))
 #define THREAD_ANNOTATION_ATTRIBUTE__(x)   __attribute__((x))
 #else
 #define THREAD_ANNOTATION_ATTRIBUTE__(x)   // no-op

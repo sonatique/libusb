@@ -25,7 +25,12 @@
 #define LIBUSB_THREADS_POSIX_H
 
 #include <pthread.h>
-#include "libusbi.h"
+
+/* This header is only ever included from within libusbi.h (after it has defined
+ * ASSERT_EQ and included clang_thread_safety.h), so the macros used below are
+ * already available. Including libusbi.h here would create a circular include
+ * and breaks build configurations whose include path does not contain libusb/
+ * (e.g. the oss-fuzz target compiled with -I. only). */
 
 #define PTHREAD_CHECK(expression)	ASSERT_EQ(expression, 0)
 
