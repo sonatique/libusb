@@ -65,6 +65,7 @@ static int winusbx_submit_bulk_transfer(int sub_api, struct usbi_transfer *itran
 static int winusbx_clear_halt(int sub_api, struct libusb_device_handle *dev_handle, unsigned char endpoint);
 static int winusbx_cancel_transfer(int sub_api, struct usbi_transfer *itransfer);
 static int winusbx_reset_device(int sub_api, struct libusb_device_handle *dev_handle);
+static int get_valid_interface(struct libusb_device_handle *dev_handle, int api_id);
 static enum libusb_transfer_status winusbx_copy_transfer_data(int sub_api, struct usbi_transfer *itransfer, DWORD length);
 static int winusbx_endpoint_supports_raw_io(int sub_api, struct libusb_device_handle* dev_handle, uint8_t endpoint);
 static int winusbx_endpoint_set_raw_io(int sub_api, struct libusb_device_handle* dev_handle, uint8_t endpoint, int enable);
@@ -643,6 +644,16 @@ static int auto_claim(struct libusb_transfer *transfer, int *interface_number, i
 	}
 
 	usbi_mutex_lock(&autoclaim_lock);
+
+	if (current_interface < 0) {
+		// The caller looked for a serviceable interface without holding this lock, so another
+		// thread may have claimed one in the meantime, automatically or explicitly on behalf of
+		// the application. Look again now that the lock is held: claiming on top of that would
+		// make this transfer believe it owns the interface, and its auto-release would then close
+		// an interface the application, or another transfer, still relies on.
+		current_interface = get_valid_interface(transfer->dev_handle, api_type);
+	}
+
 	if (current_interface < 0) { // No serviceable interface was found
 		// Status of the last claim attempt, returned to the caller when the scan
 		// comes up empty: LIBUSB_ERROR_NO_DEVICE for a device that has been
