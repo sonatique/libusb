@@ -1568,6 +1568,11 @@ struct usbi_os_backend {
 
 extern const struct usbi_os_backend usbi_backend;
 
+/* Claim an interface unless the handle holds it already, reporting in *claimed
+ * whether this call performed the claim. */
+int usbi_claim_interface(struct libusb_device_handle *dev_handle,
+	uint8_t interface_number, int *claimed);
+
 /* Resolve the string descriptor index (iConfiguration / iInterface) for a
  * configuration or interface alternate setting, without opening the device.
  * config_value is the bConfigurationValue, or 0 for the active configuration.
