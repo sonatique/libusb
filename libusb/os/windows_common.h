@@ -320,6 +320,7 @@ struct usbdk_transfer_priv {
 
 struct winusb_transfer_priv {
 	uint8_t interface_number;
+	uint8_t autoclaim_ref; // Set when auto_claim() took an auto-claim reference on interface_number
 
 	uint8_t *hid_buffer; // 1 byte extended data buffer, required for HID
 	uint8_t *hid_dest;   // transfer buffer destination, required for HID

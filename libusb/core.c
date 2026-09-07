@@ -1820,6 +1820,45 @@ int API_EXPORTED libusb_set_configuration(libusb_device_handle *dev_handle,
 	return usbi_backend.set_configuration(dev_handle, configuration);
 }
 
+/* Claim an interface unless the handle holds it already, and tell the caller
+ * which of the two occurred. *claimed is set only for a claim this call made.
+ *
+ * libusb_claim_interface() reports success in both cases, so a caller that
+ * claims on behalf of something else, such as the auto-claim a backend does
+ * for a transfer, cannot tell its own claim from one the application or
+ * another transfer made first. Such a caller must know, because it releases
+ * what it claimed. Reading the claimed state before the claim does not give
+ * the answer either: the application can claim the interface in the interval.
+ * The test and the claim are one critical section here.
+ */
+int usbi_claim_interface(libusb_device_handle *dev_handle,
+	uint8_t interface_number, int *claimed) EXCLUDES(dev_handle->lock)
+{
+	int r = 0;
+
+	*claimed = 0;
+
+	if (interface_number >= USB_MAXINTERFACES)
+		return LIBUSB_ERROR_INVALID_PARAM;
+
+	if (!usbi_atomic_load(&dev_handle->dev->attached))
+		return LIBUSB_ERROR_NO_DEVICE;
+
+	usbi_mutex_lock(&dev_handle->lock);
+	if (dev_handle->claimed_interfaces & (1U << interface_number))
+		goto out;
+
+	r = usbi_backend.claim_interface(dev_handle, interface_number);
+	if (r == 0) {
+		dev_handle->claimed_interfaces |= 1U << interface_number;
+		*claimed = 1;
+	}
+
+out:
+	usbi_mutex_unlock(&dev_handle->lock);
+	return r;
+}
+
 /** \ingroup libusb_dev
  * Claim an interface on a given device handle. You must claim the interface
  * you wish to use before you can perform I/O on any of its endpoints.
@@ -1851,26 +1890,13 @@ int API_EXPORTED libusb_set_configuration(libusb_device_handle *dev_handle,
 int API_EXPORTED libusb_claim_interface(libusb_device_handle *dev_handle,
 	int interface_number) EXCLUDES(dev_handle->lock)
 {
-	int r = 0;
+	int claimed;
 
 	usbi_dbg(usbi_handle_ctx(dev_handle), "interface %d", interface_number);
 	if (interface_number < 0 || interface_number >= USB_MAXINTERFACES)
 		return LIBUSB_ERROR_INVALID_PARAM;
 
-	if (!usbi_atomic_load(&dev_handle->dev->attached))
-		return LIBUSB_ERROR_NO_DEVICE;
-
-	usbi_mutex_lock(&dev_handle->lock);
-	if (dev_handle->claimed_interfaces & (1U << interface_number))
-		goto out;
-
-	r = usbi_backend.claim_interface(dev_handle, (uint8_t)interface_number);
-	if (r == 0)
-		dev_handle->claimed_interfaces |= 1U << interface_number;
-
-out:
-	usbi_mutex_unlock(&dev_handle->lock);
-	return r;
+	return usbi_claim_interface(dev_handle, (uint8_t)interface_number, &claimed);
 }
 
 /** \ingroup libusb_dev
