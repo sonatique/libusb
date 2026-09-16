@@ -517,9 +517,14 @@ struct libusb_device {
 };
 
 struct libusb_device_handle {
-	/* lock protects claimed_interfaces */
+	/* lock protects claimed_interfaces and internal_claims */
 	usbi_mutex_t lock;
+	/* Set when the application claimed the interface. */
 	unsigned long claimed_interfaces;
+	/* Claims libusb made for its own use, such as a control transfer that needs
+	 * an interface to travel on. The driver holds the interface while either
+	 * this count is non-zero or the application's bit is set. */
+	uint16_t internal_claims[USB_MAXINTERFACES];
 
 	struct list_head list;
 	struct libusb_device *dev;
@@ -1485,8 +1490,19 @@ struct usbi_os_backend {
 
 extern const struct usbi_os_backend usbi_backend;
 
-int do_claim_interface(libusb_device_handle *dev_handle,
-	int interface_number, int (*claim_interface_backend)(struct libusb_device_handle *dev_handle_backend, uint8_t interface_number_backend));
+/* Claim an interface for libusb's own use, and give such a claim back. The
+ * application's claim is counted separately, so neither one releases the
+ * other's. usbi_return_interface() releases the interface only when no internal
+ * claim remains and the application does not hold it.
+ *
+ * claim_interface_backend performs the claim. The Windows backend passes its
+ * lighter "initialize" entry point, so a transfer borrowing an interface does
+ * not take the exclusive user claim. */
+int usbi_borrow_interface(struct libusb_device_handle *dev_handle,
+	uint8_t interface_number,
+	int (*claim_interface_backend)(struct libusb_device_handle *dev_handle_backend, uint8_t interface_number_backend));
+void usbi_return_interface(struct libusb_device_handle *dev_handle,
+	uint8_t interface_number);
 
 #define for_each_context(c) \
 	for_each_helper(c, &active_contexts_list, struct libusb_context)

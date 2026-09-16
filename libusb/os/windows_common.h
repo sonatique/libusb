@@ -306,7 +306,6 @@ struct winusb_device_handle_priv {
 		HANDLE api_handle; // used by the API to communicate with the device
 		uint8_t zlp[USB_MAXENDPOINTS]; // Current per-endpoint SHORT_PACKET_TERMINATE status (enum WINUSB_ZLP)
 	} interface_handle[USB_MAXINTERFACES];
-	int autoclaim_count[USB_MAXINTERFACES]; // For auto-release
 };
 
 struct usbdk_transfer_priv {
@@ -317,6 +316,7 @@ struct usbdk_transfer_priv {
 
 struct winusb_transfer_priv {
 	uint8_t interface_number;
+	uint8_t autoclaim_ref; // Set while the transfer holds an interface borrowed by auto_claim()
 
 	uint8_t *hid_buffer; // 1 byte extended data buffer, required for HID
 	uint8_t *hid_dest;   // transfer buffer destination, required for HID

@@ -58,6 +58,8 @@ static int winusbx_submit_bulk_transfer(int sub_api, struct usbi_transfer *itran
 static int winusbx_clear_halt(int sub_api, struct libusb_device_handle *dev_handle, unsigned char endpoint);
 static int winusbx_cancel_transfer(int sub_api, struct usbi_transfer *itransfer);
 static int winusbx_reset_device(int sub_api, struct libusb_device_handle *dev_handle);
+static int get_valid_interface(struct libusb_device_handle *dev_handle, int api_id);
+static int check_valid_interface(struct libusb_device_handle *dev_handle, unsigned short interface, int api_id);
 static enum libusb_transfer_status winusbx_copy_transfer_data(int sub_api, struct usbi_transfer *itransfer, DWORD length);
 // HID API prototypes
 static bool hid_init(struct libusb_context *ctx);
@@ -87,8 +89,6 @@ static int composite_clear_halt(int sub_api, struct libusb_device_handle *dev_ha
 static int composite_cancel_transfer(int sub_api, struct usbi_transfer *itransfer);
 static int composite_reset_device(int sub_api, struct libusb_device_handle *dev_handle);
 static enum libusb_transfer_status composite_copy_transfer_data(int sub_api, struct usbi_transfer *itransfer, DWORD length);
-
-static usbi_mutex_t autoclaim_lock;
 
 // API globals
 static struct winusb_interface WinUSBX[SUB_API_MAX];
@@ -618,13 +618,43 @@ static int windows_initialize_interface(struct libusb_device_handle *dev_handle,
 /*
  * auto-claiming and auto-release helper functions
  */
+
+/*
+ * Give back the interface auto_claim() borrowed for this transfer. A transfer that
+ * borrowed nothing, such as a bulk or isochronous one, is a no-op.
+ */
+static void auto_release(struct usbi_transfer *itransfer)
+{
+	struct winusb_transfer_priv *transfer_priv = get_winusb_transfer_priv(itransfer);
+	struct libusb_transfer *transfer = USBI_TRANSFER_TO_LIBUSB_TRANSFER(itransfer);
+
+	if (!transfer_priv->autoclaim_ref)
+		return;
+
+	transfer_priv->autoclaim_ref = 0;
+	usbi_return_interface(transfer->dev_handle, transfer_priv->interface_number);
+}
+
+/*
+ * Give a control transfer an interface to run on, and claim one when no interface
+ * of the API type is open yet.
+ *
+ * On entry *interface_number is the interface the request targets, or -1 when any
+ * interface of the API type will do. On success it holds the interface to use,
+ * transfer_priv->interface_number is set to it, and the transfer holds a borrow
+ * that auto_release() gives back.
+ *
+ * The lookup is only a hint. usbi_borrow_interface() claims the interface when
+ * nothing holds it yet, so a claim or a release between the lookup and the borrow
+ * cannot make the result wrong.
+ */
 static int auto_claim(struct libusb_transfer *transfer, int *interface_number, int api_type)
 {
-	struct winusb_device_handle_priv *handle_priv =
-		get_winusb_device_handle_priv(transfer->dev_handle);
+	struct usbi_transfer *itransfer = LIBUSB_TRANSFER_TO_USBI_TRANSFER(transfer);
+	struct winusb_transfer_priv *transfer_priv = get_winusb_transfer_priv(itransfer);
 	struct winusb_device_priv *priv = usbi_get_device_priv(transfer->dev_handle->dev);
-	int current_interface = *interface_number;
-	int r = LIBUSB_SUCCESS;
+	int current_interface;
+	int r;
 
 	switch (api_type) {
 	case USB_API_WINUSBX:
@@ -634,8 +664,19 @@ static int auto_claim(struct libusb_transfer *transfer, int *interface_number, i
 		return LIBUSB_ERROR_INVALID_PARAM;
 	}
 
-	usbi_mutex_lock(&autoclaim_lock);
-	if (current_interface < 0) { // No serviceable interface was found
+	// A composite device retries a failed submission on another interface with the
+	// same transfer, so give back any borrow a previous attempt took
+	auto_release(itransfer);
+
+	current_interface = (*interface_number < 0) ? -1
+		: check_valid_interface(transfer->dev_handle, (unsigned short)*interface_number, api_type);
+	if (current_interface < 0)
+		current_interface = get_valid_interface(transfer->dev_handle, api_type);
+
+	if (current_interface >= 0) {
+		r = usbi_borrow_interface(transfer->dev_handle, (uint8_t)current_interface,
+			windows_initialize_interface);
+	} else { // No interface of this API type is open
 		// Status of the last claim attempt, returned to the caller when the scan
 		// comes up empty: LIBUSB_ERROR_NO_DEVICE for a device that has been
 		// unplugged or re-enumerated, LIBUSB_ERROR_NOT_FOUND when the device
@@ -647,12 +688,10 @@ static int auto_claim(struct libusb_transfer *transfer, int *interface_number, i
 			if (priv->usb_interface[current_interface].apib->id != api_type)
 				continue;
 
-			claim_status = do_claim_interface(transfer->dev_handle, current_interface, windows_initialize_interface);
+			claim_status = usbi_borrow_interface(transfer->dev_handle, (uint8_t)current_interface,
+				windows_initialize_interface);
 			if (claim_status == LIBUSB_SUCCESS) {
 				usbi_dbg(TRANSFER_CTX(transfer), "auto-claimed interface %d for control request", current_interface);
-				if (handle_priv->autoclaim_count[current_interface] != 0)
-					usbi_err(TRANSFER_CTX(transfer), "program assertion failed - autoclaim_count was nonzero");
-				handle_priv->autoclaim_count[current_interface]++;
 				break;
 			}
 
@@ -662,44 +701,20 @@ static int auto_claim(struct libusb_transfer *transfer, int *interface_number, i
 				break;
 			}
 		}
-		if (current_interface == USB_MAXINTERFACES) {
-			r = claim_status;
+
+		r = claim_status;
+		if (current_interface == USB_MAXINTERFACES)
 			usbi_err(TRANSFER_CTX(transfer), "could not auto-claim any interface: %s",
 				libusb_error_name(r));
-		}
-	} else {
-		// If we have a valid interface that was autoclaimed, we must increment
-		// its autoclaim count so that we can prevent an early release.
-		if (handle_priv->autoclaim_count[current_interface] != 0)
-			handle_priv->autoclaim_count[current_interface]++;
 	}
-	usbi_mutex_unlock(&autoclaim_lock);
+
+	if (r == LIBUSB_SUCCESS) {
+		transfer_priv->interface_number = (uint8_t)current_interface;
+		transfer_priv->autoclaim_ref = 1;
+	}
 
 	*interface_number = current_interface;
 	return r;
-}
-
-static void auto_release(struct usbi_transfer *itransfer)
-{
-	struct winusb_transfer_priv *transfer_priv = get_winusb_transfer_priv(itransfer);
-	struct libusb_transfer *transfer = USBI_TRANSFER_TO_LIBUSB_TRANSFER(itransfer);
-	libusb_device_handle *dev_handle = transfer->dev_handle;
-	struct winusb_device_handle_priv *handle_priv = get_winusb_device_handle_priv(dev_handle);
-	int r;
-
-	usbi_mutex_lock(&autoclaim_lock);
-	if (handle_priv->autoclaim_count[transfer_priv->interface_number] > 0) {
-		handle_priv->autoclaim_count[transfer_priv->interface_number]--;
-		if (handle_priv->autoclaim_count[transfer_priv->interface_number] == 0) {
-			r = libusb_release_interface(dev_handle, transfer_priv->interface_number);
-			if (r == LIBUSB_SUCCESS)
-				usbi_dbg(ITRANSFER_CTX(itransfer), "auto-released interface %d", transfer_priv->interface_number);
-			else
-				usbi_dbg(ITRANSFER_CTX(itransfer), "failed to auto-release interface %d (%s)",
-					transfer_priv->interface_number, libusb_error_name((enum libusb_error)r));
-		}
-	}
-	usbi_mutex_unlock(&autoclaim_lock);
 }
 
 /*
@@ -722,9 +737,6 @@ static int winusb_init(struct libusb_context *ctx)
 				usb_api_backend[i].designation);
 	}
 
-	// We need a lock for proper auto-release
-	usbi_mutex_init(&autoclaim_lock);
-
 	return LIBUSB_SUCCESS;
 }
 
@@ -736,8 +748,6 @@ static void winusb_exit(struct libusb_context *ctx)
 	int i;
 
 	UNUSED(ctx);
-
-	usbi_mutex_destroy(&autoclaim_lock);
 
 	for (i = 0; i < USB_API_MAX; i++) {
 		if (usb_api_backend[i].exit)
@@ -3233,7 +3243,6 @@ static int winusbx_submit_control_transfer(int sub_api, struct usbi_transfer *it
 {
 	struct libusb_transfer *transfer = USBI_TRANSFER_TO_LIBUSB_TRANSFER(itransfer);
 	struct winusb_device_priv *priv = usbi_get_device_priv(transfer->dev_handle->dev);
-	struct winusb_transfer_priv *transfer_priv = get_winusb_transfer_priv(itransfer);
 	struct winusb_device_handle_priv *handle_priv = get_winusb_device_handle_priv(transfer->dev_handle);
 	PWINUSB_SETUP_PACKET setup = (PWINUSB_SETUP_PACKET)transfer->buffer;
 	ULONG size, transferred;
@@ -3251,19 +3260,19 @@ static int winusbx_submit_control_transfer(int sub_api, struct usbi_transfer *it
 	if (size > MAX_CTRL_BUFFER_LENGTH)
 		return LIBUSB_ERROR_INVALID_PARAM;
 
+	// An interface request targets one interface. Any other request runs on any
+	// interface of the API type.
 	if ((setup->RequestType & 0x1F) == LIBUSB_RECIPIENT_INTERFACE)
-		current_interface = check_valid_interface(transfer->dev_handle, setup->Index & 0xff, USB_API_WINUSBX);
+		current_interface = setup->Index & 0xff;
 	else
-		current_interface = get_valid_interface(transfer->dev_handle, USB_API_WINUSBX);
-	if (current_interface < 0) {
-		r = auto_claim(transfer, &current_interface, USB_API_WINUSBX);
-		if (r != LIBUSB_SUCCESS)
-			return r;
-	}
+		current_interface = -1;
+
+	r = auto_claim(transfer, &current_interface, USB_API_WINUSBX);
+	if (r != LIBUSB_SUCCESS)
+		return r;
 
 	usbi_dbg(ITRANSFER_CTX(itransfer), "will use interface %d", current_interface);
 
-	transfer_priv->interface_number = (uint8_t)current_interface;
 	winusb_handle = handle_priv->interface_handle[current_interface].api_handle;
 	set_transfer_priv_handle(itransfer, handle_priv->interface_handle[current_interface].dev_handle);
 	overlapped = get_transfer_priv_overlapped(itransfer);
@@ -4497,16 +4506,13 @@ static int hid_submit_control_transfer(int sub_api, struct usbi_transfer *itrans
 	if (size > MAX_CTRL_BUFFER_LENGTH)
 		return LIBUSB_ERROR_INVALID_PARAM;
 
-	current_interface = get_valid_interface(dev_handle, USB_API_HID);
-	if (current_interface < 0) {
-		r = auto_claim(transfer, &current_interface, USB_API_HID);
-		if (r != LIBUSB_SUCCESS)
-			return r;
-	}
+	current_interface = -1;
+	r = auto_claim(transfer, &current_interface, USB_API_HID);
+	if (r != LIBUSB_SUCCESS)
+		return r;
 
 	usbi_dbg(ITRANSFER_CTX(itransfer), "will use interface %d", current_interface);
 
-	transfer_priv->interface_number = (uint8_t)current_interface;
 	hid_handle = handle_priv->interface_handle[current_interface].api_handle;
 	set_transfer_priv_handle(itransfer, hid_handle);
 	overlapped = get_transfer_priv_overlapped(itransfer);

@@ -1756,29 +1756,82 @@ int API_EXPORTED libusb_set_configuration(libusb_device_handle *dev_handle,
 	return usbi_backend.set_configuration(dev_handle, configuration);
 }
 
-int do_claim_interface(libusb_device_handle *dev_handle,
-	int interface_number, int (*claim_interface_backend)(struct libusb_device_handle *dev_handle_backend, uint8_t interface_number_backend))
+/* Claim an interface for libusb's own use, on behalf of something that needs an
+ * interface to work with, such as a control transfer on a backend that offers no
+ * device level path. The application's claim is a separate fact, so a claim the
+ * application makes afterwards is recorded and survives this one being given
+ * back.
+ *
+ * The interface is claimed with the driver only when nothing holds it yet, using
+ * claim_interface_backend. The Windows backend passes its "initialize" entry
+ * point there, which opens the interface without taking the exclusive user claim.
+ */
+int usbi_borrow_interface(libusb_device_handle *dev_handle,
+	uint8_t interface_number,
+	int (*claim_interface_backend)(struct libusb_device_handle *dev_handle_backend, uint8_t interface_number_backend))
 {
 	int r = 0;
 
-	usbi_dbg(HANDLE_CTX(dev_handle), "interface %d", interface_number);
-	if (interface_number < 0 || interface_number >= USB_MAXINTERFACES)
+	if (interface_number >= USB_MAXINTERFACES)
 		return LIBUSB_ERROR_INVALID_PARAM;
 
 	if (!usbi_atomic_load(&dev_handle->dev->attached))
 		return LIBUSB_ERROR_NO_DEVICE;
 
 	usbi_mutex_lock(&dev_handle->lock);
-	if (dev_handle->claimed_interfaces & (1U << interface_number))
+	if (dev_handle->internal_claims[interface_number] == UINT16_MAX) {
+		r = LIBUSB_ERROR_NO_MEM;
 		goto out;
+	}
 
-	r = claim_interface_backend(dev_handle, (uint8_t)interface_number);
+	if ((dev_handle->claimed_interfaces & (1U << interface_number))
+			|| (dev_handle->internal_claims[interface_number] > 0)) {
+		dev_handle->internal_claims[interface_number]++;
+		goto out;
+	}
+
+	r = claim_interface_backend(dev_handle, interface_number);
 	if (r == 0)
-		dev_handle->claimed_interfaces |= 1U << interface_number;
+		dev_handle->internal_claims[interface_number] = 1;
 
 out:
 	usbi_mutex_unlock(&dev_handle->lock);
 	return r;
+}
+
+/* Give back a claim taken with usbi_borrow_interface(). The interface is
+ * released only when no other internal claim remains and the application does
+ * not hold it.
+ */
+void usbi_return_interface(libusb_device_handle *dev_handle,
+	uint8_t interface_number)
+{
+	int r;
+
+	if (interface_number >= USB_MAXINTERFACES)
+		return;
+
+	usbi_mutex_lock(&dev_handle->lock);
+	if (dev_handle->internal_claims[interface_number] == 0) {
+		usbi_err(HANDLE_CTX(dev_handle),
+			"program assertion failed - internal claim count was zero on return");
+		goto out;
+	}
+
+	if (--dev_handle->internal_claims[interface_number] > 0)
+		goto out;
+
+	/* the application claimed it in the meantime and keeps it */
+	if (dev_handle->claimed_interfaces & (1U << interface_number))
+		goto out;
+
+	r = usbi_backend.release_interface(dev_handle, interface_number);
+	if (r != 0)
+		usbi_dbg(HANDLE_CTX(dev_handle), "failed to release interface %u (%s)",
+			interface_number, libusb_error_name((enum libusb_error)r));
+
+out:
+	usbi_mutex_unlock(&dev_handle->lock);
 }
 
 /** \ingroup libusb_dev
@@ -1812,7 +1865,33 @@ out:
 int API_EXPORTED libusb_claim_interface(libusb_device_handle *dev_handle,
 	int interface_number)
 {
-	return do_claim_interface(dev_handle, interface_number, usbi_backend.claim_interface);
+	int r = 0;
+
+	usbi_dbg(HANDLE_CTX(dev_handle), "interface %d", interface_number);
+	if (interface_number < 0 || interface_number >= USB_MAXINTERFACES)
+		return LIBUSB_ERROR_INVALID_PARAM;
+
+	if (!usbi_atomic_load(&dev_handle->dev->attached))
+		return LIBUSB_ERROR_NO_DEVICE;
+
+	usbi_mutex_lock(&dev_handle->lock);
+	if (dev_handle->claimed_interfaces & (1U << interface_number))
+		goto out;
+
+	/* libusb already holds the interface for its own use, so the driver claim is
+	 * done. Record the application's claim beside it. */
+	if (dev_handle->internal_claims[interface_number] > 0) {
+		dev_handle->claimed_interfaces |= 1U << interface_number;
+		goto out;
+	}
+
+	r = usbi_backend.claim_interface(dev_handle, (uint8_t)interface_number);
+	if (r == 0)
+		dev_handle->claimed_interfaces |= 1U << interface_number;
+
+out:
+	usbi_mutex_unlock(&dev_handle->lock);
+	return r;
 }
 
 /** \ingroup libusb_dev
@@ -1846,6 +1925,14 @@ int API_EXPORTED libusb_release_interface(libusb_device_handle *dev_handle,
 	usbi_mutex_lock(&dev_handle->lock);
 	if (!(dev_handle->claimed_interfaces & (1U << interface_number))) {
 		r = LIBUSB_ERROR_NOT_FOUND;
+		goto out;
+	}
+
+	/* libusb still needs the interface, so drop the application's claim and keep
+	 * the driver claim for whatever holds it. */
+	if (dev_handle->internal_claims[interface_number] > 0) {
+		dev_handle->claimed_interfaces &= ~(1U << interface_number);
+		r = 0;
 		goto out;
 	}
 
