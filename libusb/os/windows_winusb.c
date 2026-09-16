@@ -2427,6 +2427,7 @@ static int winusb_submit_transfer(struct usbi_transfer *itransfer)
 	struct libusb_transfer *transfer = USBI_TRANSFER_TO_LIBUSB_TRANSFER(itransfer);
 	struct winusb_device_priv *priv = usbi_get_device_priv(transfer->dev_handle->dev);
 	int (*transfer_fn)(int, struct usbi_transfer *);
+	int r;
 
 	switch (transfer->type) {
 	case LIBUSB_TRANSFER_TYPE_CONTROL:
@@ -2453,7 +2454,15 @@ static int winusb_submit_transfer(struct usbi_transfer *itransfer)
 		return LIBUSB_ERROR_NOT_SUPPORTED;
 	}
 
-	return transfer_fn(SUB_API_NOTSET, itransfer);
+	r = transfer_fn(SUB_API_NOTSET, itransfer);
+
+	// A submit that failed never completes, so the completion path never runs
+	// winusb_clear_transfer_priv() for it. Give back here whatever interface
+	// auto_claim() borrowed; a transfer that borrowed nothing is a no-op.
+	if (r != LIBUSB_SUCCESS)
+		auto_release(itransfer);
+
+	return r;
 }
 
 static int winusb_cancel_transfer(struct usbi_transfer *itransfer)
