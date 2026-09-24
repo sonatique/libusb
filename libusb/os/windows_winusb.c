@@ -3069,6 +3069,12 @@ static int winusbx_initialize_interface(int sub_api, struct libusb_device_handle
 		}
 		handle_priv->interface_handle[iface].api_handle = winusb_handle;
 	} else {
+		// Initialized already, e.g. borrowed by libusb for a control transfer: asking
+		// GetAssociatedInterface() again fails with ERROR_ALREADY_EXISTS, and the failure
+		// path below would overwrite the api_handle that is in use.
+		if (HANDLE_VALID(handle_priv->interface_handle[iface].api_handle))
+			return LIBUSB_SUCCESS;
+
 		if (is_associated_interface) {
 			initialized_iface = priv->usb_interface[iface].first_associated_interface;
 			if (iface <= initialized_iface) {
@@ -3127,9 +3133,15 @@ static int winusbx_claim_interface(int sub_api, struct libusb_device_handle *dev
 	struct winusb_device_handle_priv *handle_priv = get_winusb_device_handle_priv(dev_handle);
 	struct winusb_device_priv *priv = usbi_get_device_priv(dev_handle->dev);
 	HANDLE winusb_handle;
+	bool already_initialized;
 	int r;
 
 	CHECK_WINUSBX_AVAILABLE(sub_api);
+
+	// Initialized already: libusb borrows the interface for a transfer of its own,
+	// or it came up with another one, and whoever holds it still needs the api_handle
+	// whatever becomes of this claim.
+	already_initialized = HANDLE_VALID(handle_priv->interface_handle[iface].api_handle);
 
 	r = winusbx_initialize_interface(sub_api, dev_handle, iface);
 	if(r != 0) {
@@ -3145,7 +3157,9 @@ static int winusbx_claim_interface(int sub_api, struct libusb_device_handle *dev
 			// winusbx_initialize_interface(). It reads api_handle itself and sets
 			// it to INVALID_HANDLE_VALUE once freed, so clearing it here first would
 			// make release bail at its HANDLE_VALID() guard and leak the handle.
-			winusbx_release_interface(sub_api, dev_handle, iface);
+			// An api_handle this call did not obtain stays with whoever holds it.
+			if (!already_initialized)
+				winusbx_release_interface(sub_api, dev_handle, iface);
 			return LIBUSB_ERROR_BUSY;
 		}
 	}

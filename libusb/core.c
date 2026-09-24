@@ -1878,13 +1878,9 @@ int API_EXPORTED libusb_claim_interface(libusb_device_handle *dev_handle,
 	if (dev_handle->claimed_interfaces & (1U << interface_number))
 		goto out;
 
-	/* libusb already holds the interface for its own use, so the driver claim is
-	 * done. Record the application's claim beside it. */
-	if (dev_handle->internal_claims[interface_number] > 0) {
-		dev_handle->claimed_interfaces |= 1U << interface_number;
-		goto out;
-	}
-
+	/* Claimed with the backend even while libusb holds the interface for its own
+	 * use: that hold may be the lighter one, which does not keep other programs
+	 * out, and the application's claim must. */
 	r = usbi_backend.claim_interface(dev_handle, (uint8_t)interface_number);
 	if (r == 0)
 		dev_handle->claimed_interfaces |= 1U << interface_number;

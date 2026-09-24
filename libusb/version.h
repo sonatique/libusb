@@ -15,8 +15,8 @@
 /* LIBUSB_RC is the release candidate suffix. Should normally be empty. */
 #ifndef LIBUSB_RC
 #if defined(__WINE__)
-#define LIBUSB_RC "-li6v006C-Wine"
+#define LIBUSB_RC "-li6v006D-Wine"
 #else
-#define LIBUSB_RC "-li6v006C"
+#define LIBUSB_RC "-li6v006D"
 #endif
 #endif
